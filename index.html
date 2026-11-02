@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unicon soft</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1a2033;--mut:#667089;--ac:#2f5bea;--acx:#fff;--bd:#e1e5f0;--ok:#157347;--err:#c0392b;--sb:#fff;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131b;--card:#1a1f2c;--tx:#eef1f8;--mut:#9aa4bd;--ac:#6f93ff;--acx:#0d1220;--bd:#2b3246;--ok:#4cc38a;--err:#ff7b6b;--sb:#151927;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10131b;--card:#1a1f2c;--tx:#eef1f8;--mut:#9aa4bd;--ac:#6f93ff;--acx:#0d1220;--bd:#2b3246;--ok:#4cc38a;--err:#ff7b6b;--sb:#151927;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+.side{position:fixed;z-index:20;left:0;top:0;bottom:0;width:50vw;min-width:240px;background:var(--sb);border-right:1px solid var(--bd);padding:18px 12px;transform:translateX(-100%);transition:transform .2s}
+body.open .side{transform:none}
+.side button[data-v]{opacity:0;transform:translateX(-14px)}
+body.open .side button[data-v]{opacity:1;transform:none;transition:opacity .25s,transform .25s}
+body.open .side button[data-v]:nth-of-type(1){transition-delay:.12s}
+body.open .side button[data-v]:nth-of-type(2){transition-delay:.26s}
+body.open .side button[data-v]:nth-of-type(3){transition-delay:.4s}
+body.open .side button[data-v]:nth-of-type(4){transition-delay:.54s}
+.brand{font-weight:700;font-size:1.1rem;padding:6px 10px 16px}
+.side button{display:block;width:100%;text-align:left;padding:11px 12px;margin-bottom:4px;font:inherit;color:var(--tx);background:none;border:0;border-radius:10px;cursor:pointer}
+.side button:hover{background:var(--bg)}
+.side button.act{background:var(--ac);color:var(--acx);font-weight:600}
+.side .brand{display:flex;align-items:center;justify-content:space-between}
+.side .brand button{width:auto;margin:0;padding:6px 12px;font-size:1.2rem;line-height:1;border:1px solid var(--bd)}
+.scrim{position:fixed;z-index:10;inset:0;background:rgba(0,0,0,.4);display:none}
+body.open .scrim{display:block}
+.top{display:flex;align-items:center;gap:12px;padding:14px 18px 0;max-width:760px;margin:0 auto}
+.top button{font:inherit;font-size:1.1rem;line-height:1;padding:8px 12px;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;cursor:pointer}
+#vt{font-weight:600}
+main,.auth{max-width:760px;margin:0 auto;padding:18px 18px 48px}
+.auth{max-width:420px;padding-top:50px}
+h1{font-size:1.7rem;margin:0 0 6px}
+h2{font-size:1.15rem;margin:0 0 12px}
+h3{font-size:1rem;margin:18px 0 6px}
+p.sub{margin:0 0 22px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.dir{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px 14px;text-align:left;color:var(--tx);font:inherit;cursor:pointer}
+.dir b{display:block;font-size:1.05rem}
+.dir span{color:var(--mut);font-size:.85rem}
+.dir:hover{border-color:var(--ac)}
+.dir.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-top:18px}
+label{display:block;font-size:.9rem;color:var(--mut);margin:12px 0 4px}
+input,textarea{width:100%;padding:11px 12px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px}
+textarea{min-height:180px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--ac);border-color:transparent}
+button.go{margin-top:18px;width:100%;padding:12px;font:inherit;font-weight:600;color:var(--acx);background:var(--ac);border:0;border-radius:10px;cursor:pointer}
+button.go.alt{background:var(--bg);color:var(--tx);border:1px solid var(--bd);margin-top:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1;padding:10px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;cursor:pointer}
+.row button.act{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.msg{margin-top:12px;font-size:.95rem}
+.ok{color:var(--ok)}.err{color:var(--err)}
+.hide{display:none!important}
+details.sec{background:var(--card);border:1px solid var(--bd);border-radius:14px;margin-bottom:12px;padding:0 16px}
+details.sec>summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::before{content:"▸ "}
+details.sec[open]>summary::before{content:"▾ "}
+details.sec .in{padding:0 0 16px}
+.mini{padding:6px 10px;font:inherit;font-size:.85rem;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;cursor:pointer;margin-right:4px}
+.mini.del{color:var(--err)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.tpl pre{white-space:pre-wrap;word-break:break-word;font:inherit;margin:0 0 12px;padding:12px;background:var(--bg);border:1px solid var(--bd);border-radius:10px}
+</style>
+</head>
+<body>
+
+<div id="auth" class="auth">
+  <div class="panel" style="margin-top:0">
+    <h1>Unicon soft</h1>
+    <p class="sub">Tizimga kiring yoki ro’yxatdan o’ting.</p>
+    <label for="em">Email</label>
+    <input id="em" type="email" autocomplete="email">
+    <label for="pw">Parol (kamida 6 belgi)</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button class="go" id="bin" type="button">Kirish</button>
+    <button class="go alt" id="bup" type="button">Ro’yxatdan o’tish</button>
+    <div class="msg" id="amsg" role="status"></div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+  <aside class="side">
+    <div class="brand"><span>Unicon soft</span><button type="button" id="closeSide" aria-label="Menyuni yopish">←</button></div>
+    <button data-v="home" class="act">Bosh sahifa</button>
+    <button data-v="admin" id="navAdmin" class="hide">Boshqaruv</button>
+    <button data-v="tpl">Xat namunalari</button>
+    <button data-v="set">Sozlamalar</button>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="top"><button id="burger" type="button">→ Menyu</button><span id="vt">Bosh sahifa</span></div>
+  <main>
+    <section id="v-home">
+      <h1>Unicon soft</h1>
+      <p class="sub">Yo’nalishni tanlang: hodimlar ro’yxati ochiladi.</p>
+      <div class="grid" id="dirs"></div>
+      <section class="panel hide" id="lst">
+        <h2>Hodimlar</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Ism</th><th>Familiya</th><th>Telefon</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table></div>
+        <a id="slink" class="hide" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:14px;color:var(--ac);font-weight:600"></a>
+      </section>
+    </section>
+
+    <section id="v-admin" class="hide">
+      <h1>Boshqaruv</h1>
+      <p class="sub">Bo’limni oching: nomi va havolasini o’zgartiring, hodim qo’shing, tahrirlang yoki o’chiring.</p>
+      <div id="secs"></div>
+    </section>
+
+    <section id="v-tpl" class="hide">
+      <h1>Xat namunalari</h1>
+      <p class="sub">Tayyor namunani nusxalab oling va [qavs] ichidagi joylarni to’ldiring.</p>
+      <div id="tpls"></div>
+    </section>
+
+    <section id="v-set" class="hide">
+      <h1>Sozlamalar</h1>
+      <div class="panel" style="margin-top:0">
+        <h2>Mavzu</h2>
+        <div class="row" id="themes">
+          <button type="button" data-t="auto">Avto</button>
+          <button type="button" data-t="light">Yorug’</button>
+          <button type="button" data-t="dark">Qorong’i</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Hisob</h2>
+        <p class="sub" style="margin:0 0 10px" id="me"></p>
+        <button class="mini" id="out" type="button">Chiqish</button>
+      </div>
+      <div id="adm" class="hide">
+        <div class="panel">
+          <h2>Foydalanuvchilar va adminlar</h2>
+          <p class="sub" style="margin:0 0 10px" id="admHint">“Faol”: oxirgi 30 daqiqa ichida kirgan.</p>
+          <div class="scroll"><table>
+            <thead><tr><th>Email</th><th>Rol</th><th>Oxirgi kirish</th><th>Kirishlar</th><th>Holat</th><th></th></tr></thead>
+            <tbody id="usrRows"></tbody>
+          </table></div>
+          <div class="msg" id="umsg"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* 1) Supabase ma’lumotlarini shu yerga qo’ying (Project Settings > API) */
+const SUPABASE_URL="PASTE_PROJECT_URL";
+const SUPABASE_KEY="PASTE_ANON_PUBLIC_KEY";
+
+const $=id=>document.getElementById(id);
+const td=t=>{const c=document.createElement("td");c.textContent=t;return c};
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let me=null,prof=null,SEC=[],STAFF=[],TPL=[],USERS=[],cur=null,booted=false;
+const isAdmin=()=>!!prof&&(prof.role==="admin"||prof.role==="owner");
+const isOwner=()=>!!prof&&prof.role==="owner";
+
+function fld(lbl,val,cb,type){
+  const w=document.createElement("div");
+  const l=document.createElement("label");l.textContent=lbl;
+  const inp=document.createElement("input");inp.value=val;inp.maxLength=type==="url"?300:80;if(type)inp.type=type;
+  inp.oninput=()=>cb(inp.value);
+  w.appendChild(l);w.appendChild(inp);return w;
+}
+function mini(t,cls,fn){const b=document.createElement("button");b.type="button";b.className="mini "+(cls||"");b.textContent=t;b.onclick=fn;return b}
+
+/* ---- kirish ---- */
+function amsg(t,c){const m=$("amsg");m.textContent=t;m.className="msg "+(c||"")}
+async function authGo(up){
+  const email=$("em").value.trim(),password=$("pw").value;
+  if(!email||password.length<6){amsg("Email va kamida 6 belgili parolni kiriting.","err");return}
+  amsg("Kuting...");
+  const r=up?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+  if(r.error){amsg(r.error.message,"err");return}
+  if(up&&!r.data.session)amsg("Emailingizga tasdiqlash xati yuborildi. Havolani bosib, qayta kiring.","ok");
+}
+$("bin").onclick=()=>authGo(false);
+$("bup").onclick=()=>authGo(true);
+$("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
+
+/* ---- menyu ---- */
+function side(open){document.body.classList.toggle("open",open);$("burger").textContent=open?"← Yopish":"→ Menyu"}
+$("closeSide").onclick=()=>side(false);
+$("burger").onclick=()=>side(!document.body.classList.contains("open"));
+$("scrim").onclick=()=>side(false);
+const TITLES={home:"Bosh sahifa",admin:"Boshqaruv",tpl:"Xat namunalari",set:"Sozlamalar"};
+function go(v){
+  if(v==="admin"&&!isAdmin())v="home";
+  ["home","admin","tpl","set"].forEach(k=>$("v-"+k).classList.toggle("hide",k!==v));
+  document.querySelectorAll(".side button[data-v]").forEach(b=>b.classList.toggle("act",b.dataset.v===v));
+  $("vt").textContent=TITLES[v];
+  side(false);
+}
+document.querySelectorAll(".side button[data-v]").forEach(b=>b.onclick=()=>go(b.dataset.v));
+
+/* ---- mavzu ---- */
+function theme(t){
+  if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
+  document.querySelectorAll("#themes button").forEach(b=>b.classList.toggle("act",b.dataset.t===t));
+}
+let savedT="auto";try{savedT=localStorage.getItem("theme")||"auto"}catch(e){}
+theme(savedT);
+document.querySelectorAll("#themes button").forEach(b=>b.onclick=()=>{theme(b.dataset.t);try{localStorage.setItem("theme",b.dataset.t)}catch(e){}});
+
+/* ---- ma’lumotlarni yuklash ---- */
+const loadSec=async()=>{SEC=(await sb.from("sections").select("*").order("idx")).data||[]};
+const loadStaff=async()=>{STAFF=(await sb.from("staff").select("*").order("id")).data||[]};
+const loadTpl=async()=>{TPL=(await sb.from("templates").select("*").order("id")).data||[]};
+const loadUsers=async()=>{if(isAdmin())USERS=(await sb.from("profiles").select("*").order("last_seen",{ascending:false})).data||[]};
+
+async function run(s,promise,okMsg,after){
+  try{const r=await promise;if(r.error)throw r.error;if(after)await after();s.msg=okMsg;s.ok=true}
+  catch(e){s.msg="Xatolik: "+(e.message||e);s.ok=false}
+  renderAll();
+}
+
+/* ---- bosh sahifa ---- */
+function cards(){
+  const box=$("dirs");box.textContent="";
+  SEC.forEach(sec=>{
+    const b=document.createElement("button");b.type="button";b.className="dir"+(cur===sec.idx?" on":"");
+    b.innerHTML="<b></b><span>Tanlash →</span>";b.firstChild.textContent=sec.name;
+    b.onclick=()=>{cur=cur===sec.idx?null:sec.idx;renderAll()};
+    box.appendChild(b);
+  });
+}
+function showList(){
+  const p=$("lst");
+  const sec=SEC.find(x=>x.idx===cur);
+  if(!sec){p.classList.add("hide");return}
+  p.classList.remove("hide");
+  p.querySelector("h2").textContent=sec.name+": hodimlar";
+  const tb=$("rows");tb.textContent="";
+  STAFF.filter(x=>x.idx===cur).forEach(x=>{
+    const tr=document.createElement("tr");
+    tr.appendChild(td(x.ism));tr.appendChild(td(x.familiya));tr.appendChild(td(x.telefon));tb.appendChild(tr);
+  });
+  if(!tb.firstChild){const er=document.createElement("tr");const ec=td("Hozircha ma’lumot kiritilmagan.");ec.colSpan=3;er.appendChild(ec);tb.appendChild(er)}
+  const a=$("slink");
+  if(sec.link){a.href=sec.link;a.textContent=sec.link.replace(/^https?:\/\//,"")+" saytiga o’tish →";a.classList.remove("hide")}else a.classList.add("hide");
+}
+
+/* ---- boshqaruv ---- */
+const ST={};
+const stOf=i=>ST[i]||(ST[i]={ism:"",fam:"",tel:"",edit:null,del:null,open:false,show:false,msg:"",ok:true});
+function adminUI(){
+  const box=$("secs");box.textContent="";
+  if(!isAdmin())return;
+  SEC.forEach(sec=>{
+    const s=stOf(sec.idx);
+    const d=document.createElement("details");d.className="sec";d.open=s.open;
+    d.addEventListener("toggle",()=>{s.open=d.open});
+    const sm=document.createElement("summary");sm.textContent=sec.name;d.appendChild(sm);
+    const inn=document.createElement("div");inn.className="in";d.appendChild(inn);
+
+    inn.appendChild(fld("Bo’lim nomi",s.name!==undefined?s.name:sec.name,v=>{s.name=v}));
+    inn.appendChild(fld("Sayt havolasi",s.link!==undefined?s.link:(sec.link||""),v=>{s.link=v},"url"));
+    const nb=mini("Saqlash","",()=>{
+      let lv=(s.link!==undefined?s.link:(sec.link||"")).trim();
+      if(lv&&!/^https?:\/\//i.test(lv))lv="https://"+lv;
+      const nm=(s.name!==undefined?s.name:sec.name).trim()||sec.name;
+      run(s,sb.from("sections").update({name:nm,link:lv||null}).eq("idx",sec.idx),"Saqlandi.",async()=>{s.name=undefined;s.link=undefined;await loadSec()});
+    });
+    nb.style.marginTop="10px";inn.appendChild(nb);
+
+    const h=document.createElement("h3");h.textContent="Hodimlar";inn.appendChild(h);
+    const rows=STAFF.filter(x=>x.idx===sec.idx);
+    if(!rows.length){const em=document.createElement("p");em.className="sub";em.style.margin="0";em.textContent="Hozircha hodim yo’q.";inn.appendChild(em)}
+    else{
+      const sc=document.createElement("div");sc.className="scroll";
+      const t=document.createElement("table");
+      t.innerHTML="<thead><tr><th>Ism</th><th>Familiya</th><th>Telefon</th><th></th></tr></thead>";
+      const tb=document.createElement("tbody");
+      rows.forEach(x=>{
+        const tr=document.createElement("tr");
+        tr.appendChild(td(x.ism));tr.appendChild(td(x.familiya));tr.appendChild(td(x.telefon));
+        const ac=document.createElement("td");
+        if(s.del===x.id){
+          ac.appendChild(mini("Ha, o’chirish","del",()=>{s.del=null;run(s,sb.from("staff").delete().eq("id",x.id),"O’chirildi.",loadStaff)}));
+          ac.appendChild(mini("Yo’q","",()=>{s.del=null;renderAll()}));
+        }else{
+          ac.appendChild(mini("Tahrirlash","",()=>{s.edit=x;s.ism=x.ism;s.fam=x.familiya;s.tel=x.telefon;s.msg="";s.del=null;renderAll()}));
+          ac.appendChild(mini("O’chirish","del",()=>{s.del=x.id;s.msg="";renderAll()}));
+        }
+        tr.appendChild(ac);tb.appendChild(tr);
+      });
+      t.appendChild(tb);sc.appendChild(t);inn.appendChild(sc);
+    }
+
+    const open=!!(s.edit||s.show);
+    const fh=document.createElement("div");fh.className=open?"":"hide";
+    const pb=mini("+ Yangi hodim qo’shish","",()=>{s.show=true;s.msg="";renderAll()});
+    pb.style.marginTop="14px";if(!open)inn.appendChild(pb);
+    const h2=document.createElement("h3");h2.textContent=s.edit?"Hodimni tahrirlash":"Yangi hodim qo’shish";fh.appendChild(h2);
+    const g=document.createElement("div");g.className="two";
+    g.appendChild(fld("Ism",s.ism,v=>{s.ism=v}));
+    g.appendChild(fld("Familiya",s.fam,v=>{s.fam=v}));
+    fh.appendChild(g);
+    fh.appendChild(fld("Telefon raqami",s.tel,v=>{s.tel=v},"tel"));
+    const sv=document.createElement("button");sv.type="button";sv.className="go";sv.textContent=s.edit?"Saqlash":"Qo’shish";
+    sv.onclick=()=>{
+      const a=s.ism.trim(),b=s.fam.trim(),c=s.tel.trim();
+      if(!a||!b||!c){s.msg="Ism, familiya va telefonni to’ldiring.";s.ok=false;renderAll();return}
+      const reset=async()=>{s.edit=null;s.show=false;s.ism="";s.fam="";s.tel="";await loadStaff()};
+      if(s.edit)run(s,sb.from("staff").update({ism:a,familiya:b,telefon:c}).eq("id",s.edit.id),"O’zgarishlar saqlandi.",reset);
+      else run(s,sb.from("staff").insert({idx:sec.idx,ism:a,familiya:b,telefon:c}),"Hodim qo’shildi.",reset);
+    };
+    fh.appendChild(sv);
+    const cb=mini("Bekor qilish","",()=>{s.edit=null;s.show=false;s.ism="";s.fam="";s.tel="";s.msg="";renderAll()});
+    cb.style.marginTop="8px";fh.appendChild(cb);
+    inn.appendChild(fh);
+    if(s.msg){const m=document.createElement("div");m.className="msg "+(s.ok?"ok":"err");m.textContent=s.msg;inn.appendChild(m)}
+    box.appendChild(d);
+  });
+}
+
+/* ---- xat namunalari ---- */
+const TE={edit:null,t:"",x:"",del:null,msg:"",ok:true};
+function tplForm(parent){
+  parent.appendChild(fld("Sarlavha",TE.t,v=>{TE.t=v}));
+  const l=document.createElement("label");l.textContent="Matn";parent.appendChild(l);
+  const ta=document.createElement("textarea");ta.value=TE.x;ta.oninput=()=>{TE.x=ta.value};parent.appendChild(ta);
+  const sv=document.createElement("button");sv.type="button";sv.className="go";sv.textContent="Saqlash";
+  sv.onclick=()=>{
+    if(!TE.t.trim()||!TE.x.trim()){TE.msg="Sarlavha va matnni to’ldiring.";TE.ok=false;renderAll();return}
+    const row={title:TE.t.trim(),body:TE.x};
+    const q=TE.edit===-1?sb.from("templates").insert(row):sb.from("templates").update(row).eq("id",TE.edit);
+    run(TE,q,"Saqlandi.",async()=>{TE.edit=null;TE.t="";TE.x="";await loadTpl()});
+  };
+  parent.appendChild(sv);
+  const cb=mini("Bekor qilish","",()=>{TE.edit=null;TE.msg="";renderAll()});cb.style.marginTop="8px";parent.appendChild(cb);
+}
+function tplUI(){
+  const box=$("tpls");box.textContent="";
+  TPL.forEach(p=>{
+    const w=document.createElement("div");w.className="panel tpl";w.style.marginTop="0";w.style.marginBottom="14px";
+    if(isAdmin()&&TE.edit===p.id){
+      const h=document.createElement("h2");h.textContent="Namunani tahrirlash";w.appendChild(h);tplForm(w);
+    }else{
+      const h=document.createElement("h2");h.textContent=p.title;w.appendChild(h);
+      const pre=document.createElement("pre");pre.textContent=p.body;w.appendChild(pre);
+      const b=mini("Nusxalash","",async()=>{
+        try{await navigator.clipboard.writeText(p.body);b.textContent="Nusxalandi ✓"}catch(e){b.textContent="Nusxalab bo’lmadi"}
+        setTimeout(()=>{b.textContent="Nusxalash"},2000);
+      });
+      w.appendChild(b);
+      if(isAdmin()){
+        if(TE.del===p.id){
+          w.appendChild(mini("Ha, o’chirish","del",()=>{TE.del=null;run(TE,sb.from("templates").delete().eq("id",p.id),"O’chirildi.",loadTpl)}));
+          w.appendChild(mini("Yo’q","",()=>{TE.del=null;renderAll()}));
+        }else{
+          w.appendChild(mini("Tahrirlash","",()=>{TE.edit=p.id;TE.t=p.title;TE.x=p.body;TE.msg="";TE.del=null;renderAll()}));
+          w.appendChild(mini("O’chirish","del",()=>{TE.del=p.id;TE.msg="";renderAll()}));
+        }
+      }
+    }
+    box.appendChild(w);
+  });
+  if(isAdmin()){
+    const nw=document.createElement("div");
+    if(TE.edit===-1){nw.className="panel tpl";nw.style.marginTop="0";const h=document.createElement("h2");h.textContent="Yangi namuna";nw.appendChild(h);tplForm(nw)}
+    else nw.appendChild(mini("+ Yangi namuna qo’shish","",()=>{TE.edit=-1;TE.t="";TE.x="";TE.msg="";TE.del=null;renderAll()}));
+    box.appendChild(nw);
+    if(TE.msg){const m=document.createElement("div");m.className="msg "+(TE.ok?"ok":"err");m.textContent=TE.msg;box.appendChild(m)}
+  }
+}
+
+/* ---- foydalanuvchilar (adminlarga) ---- */
+function usersUI(){
+  $("adm").classList.toggle("hide",!isAdmin());
+  const tb=$("usrRows");tb.textContent="";
+  if(!isAdmin())return;
+  $("admHint").textContent="“Faol”: oxirgi 30 daqiqa ichida kirgan."+(isOwner()?" Siz oliy boshqaruvchisiz: foydalanuvchini admin qilishingiz mumkin.":"");
+  USERS.forEach(u=>{
+    const tr=document.createElement("tr");
+    const act=u.last_seen&&(Date.now()-new Date(u.last_seen).getTime()<30*60000);
+    const roleName={owner:"Oliy boshqaruvchi",admin:"Admin",user:"Foydalanuvchi"}[u.role]||u.role;
+    tr.appendChild(td(u.email||""));tr.appendChild(td(roleName));
+    tr.appendChild(td(u.last_seen?new Date(u.last_seen).toLocaleString("uz-UZ"):""));
+    tr.appendChild(td(String(u.visits||0)));
+    const hc=td(act?"Faol":"Faol emas");hc.style.color=act?"var(--ok)":"var(--mut)";tr.appendChild(hc);
+    const ac=document.createElement("td");
+    if(isOwner()&&u.role!=="owner"){
+      const to=u.role==="admin"?"user":"admin";
+      ac.appendChild(mini(to==="admin"?"Admin qilish":"Adminlikni olish",to==="user"?"del":"",async()=>{
+        const r=await sb.from("profiles").update({role:to}).eq("id",u.id);
+        $("umsg").textContent=r.error?"Xatolik: "+r.error.message:"Saqlandi.";$("umsg").className="msg "+(r.error?"err":"ok");
+        await loadUsers();usersUI();
+      }));
+    }
+    tr.appendChild(ac);tb.appendChild(tr);
+  });
+}
+
+function renderAll(){
+  $("navAdmin").classList.toggle("hide",!isAdmin());
+  cards();showList();adminUI();tplUI();usersUI();
+}
+
+/* ---- ishga tushirish ---- */
+async function boot(session){
+  if(booted)return;booted=true;
+  me=session.user;
+  $("auth").classList.add("hide");$("app").classList.remove("hide");
+  $("me").textContent=me.email;
+  await sb.rpc("touch_me");
+  prof=(await sb.from("profiles").select("*").eq("id",me.id).single()).data;
+  await Promise.all([loadSec(),loadStaff(),loadTpl(),loadUsers()]);
+  renderAll();
+}
+if(SUPABASE_URL.startsWith("PASTE")){
+  amsg("Avval kod boshidagi SUPABASE_URL va SUPABASE_KEY ni to’ldiring.","err");
+}else{
+  sb.auth.getSession().then(r=>{if(r.data.session)boot(r.data.session)});
+  sb.auth.onAuthStateChange((ev,session)=>{if(session&&ev==="SIGNED_IN")boot(session)});
+}
+</script>
+</body>
+</html>
